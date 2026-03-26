@@ -75,6 +75,7 @@ const sizes = [
 // ─── State ───────────────────────────────────────────────────
 let cart = JSON.parse(localStorage.getItem('foliage_cart') || '[]');
 let activeFilter = 'all';
+let searchQuery = '';
 let selectedSize = 0; // index into sizes[]
 let activeProductId = null;
 
@@ -117,11 +118,17 @@ function cardBg(cat) {
 // ─── Render ───────────────────────────────────────────────────
 function renderProducts() {
   const grid = document.getElementById('productGrid');
+  const noResults = document.getElementById('noResults');
   grid.innerHTML = '';
 
-  const visible = activeFilter === 'all'
-    ? products
-    : products.filter(p => p.category === activeFilter);
+  const q = searchQuery.toLowerCase();
+  const visible = products.filter(p => {
+    const matchesFilter = activeFilter === 'all' || p.category === activeFilter;
+    const matchesSearch = !q || p.name.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q) || p.category.toLowerCase().includes(q);
+    return matchesFilter && matchesSearch;
+  });
+
+  noResults.hidden = visible.length > 0;
 
   visible.forEach(p => {
     const card = document.createElement('article');
@@ -228,6 +235,51 @@ function closeCart() {
   document.getElementById('cartDrawer').classList.remove('open');
   document.getElementById('cartOverlay').classList.remove('open');
   document.body.style.overflow = '';
+}
+
+// ─── Search ───────────────────────────────────────────────────
+function initSearch() {
+  const input = document.getElementById('searchInput');
+  const clearBtn = document.getElementById('searchClear');
+  const clearLink = document.getElementById('clearSearch');
+
+  input.addEventListener('input', () => {
+    searchQuery = input.value.trim();
+    clearBtn.hidden = !searchQuery;
+    renderProducts();
+  });
+
+  function clearSearch() {
+    input.value = '';
+    searchQuery = '';
+    clearBtn.hidden = true;
+    input.focus();
+    renderProducts();
+  }
+
+  clearBtn.addEventListener('click', clearSearch);
+  clearLink.addEventListener('click', clearSearch);
+}
+
+// ─── Mobile menu ──────────────────────────────────────────────
+function initMobileMenu() {
+  const btn = document.getElementById('hamburger');
+  const menu = document.getElementById('mobileMenu');
+
+  function toggleMenu(force) {
+    const isOpen = force !== undefined ? force : !btn.classList.contains('open');
+    btn.classList.toggle('open', isOpen);
+    menu.classList.toggle('open', isOpen);
+    btn.setAttribute('aria-expanded', isOpen);
+    menu.setAttribute('aria-hidden', !isOpen);
+  }
+
+  btn.addEventListener('click', () => toggleMenu());
+
+  // Close when a link is tapped
+  menu.querySelectorAll('.mobile-link').forEach(link => {
+    link.addEventListener('click', () => toggleMenu(false));
+  });
 }
 
 // ─── Filters ──────────────────────────────────────────────────
@@ -458,6 +510,8 @@ function initCheckout() {
 document.addEventListener('DOMContentLoaded', () => {
   renderProducts();
   initFilters();
+  initSearch();
+  initMobileMenu();
   initNavScroll();
   initCheckout();
   updateCartCount();
