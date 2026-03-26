@@ -57,9 +57,26 @@ const products = [
   { id:42, name:'Chamomile Lavender',     emoji:'🌾', category:'calming',    price:14.00, desc:'Double-calming classic: apple-sweet chamomile with soothing lavender buds.' },
 ];
 
+// ─── Category brew info ───────────────────────────────────────
+const brewInfo = {
+  calming:    { steep:'5–7 min', temp:'95°C', caffeine:'None' },
+  energising: { steep:'3–5 min', temp:'100°C', caffeine:'Trace' },
+  digestive:  { steep:'7–10 min', temp:'100°C', caffeine:'None' },
+  immune:     { steep:'5–8 min', temp:'100°C', caffeine:'None' },
+  floral:     { steep:'3–5 min', temp:'90°C', caffeine:'None' },
+};
+
+const sizes = [
+  { label:'30g', multiplier: 1 },
+  { label:'50g', multiplier: 1.55 },
+  { label:'100g', multiplier: 2.75 },
+];
+
 // ─── State ───────────────────────────────────────────────────
 let cart = JSON.parse(localStorage.getItem('foliage_cart') || '[]');
 let activeFilter = 'all';
+let selectedSize = 0; // index into sizes[]
+let activeProductId = null;
 
 // ─── Helpers ─────────────────────────────────────────────────
 function saveCart() {
@@ -111,10 +128,10 @@ function renderProducts() {
     card.className = 'product-card';
     card.dataset.category = p.category;
     card.innerHTML = `
-      <div class="card-thumb" style="${cardBg(p.category)}">${p.emoji}</div>
+      <div class="card-thumb" style="${cardBg(p.category)}" data-open="${p.id}" role="button" tabindex="0" aria-label="View ${p.name} details">${p.emoji}</div>
       <div class="card-body">
         <span class="card-category">${p.category}</span>
-        <h3 class="card-name">${p.name}</h3>
+        <h3 class="card-name" data-open="${p.id}" role="button" tabindex="0" style="cursor:pointer">${p.name}</h3>
         <p class="card-desc">${p.desc}</p>
       </div>
       <div class="card-footer">
@@ -125,9 +142,13 @@ function renderProducts() {
     grid.appendChild(card);
   });
 
-  // Attach add-to-cart listeners
   grid.querySelectorAll('.add-btn').forEach(btn => {
     btn.addEventListener('click', () => addToCart(Number(btn.dataset.id)));
+  });
+
+  grid.querySelectorAll('[data-open]').forEach(el => {
+    el.addEventListener('click', () => openProductModal(Number(el.dataset.open)));
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') openProductModal(Number(el.dataset.open)); });
   });
 }
 
@@ -229,11 +250,207 @@ function initNavScroll() {
   }, { passive: true });
 }
 
-// ─── Checkout stub ────────────────────────────────────────────
+// ─── Product Modal ────────────────────────────────────────────
+function openProductModal(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  activeProductId = id;
+  selectedSize = 0;
+
+  const brew = brewInfo[p.category] || brewInfo.calming;
+  document.getElementById('modalThumb').style.cssText = `${cardBg(p.category)}`;
+  document.getElementById('modalThumb').textContent = p.emoji;
+  document.getElementById('modalCategory').textContent = p.category;
+  document.getElementById('modalName').textContent = p.name;
+  document.getElementById('modalDesc').textContent = p.desc;
+  document.getElementById('modalSteep').textContent = brew.steep;
+  document.getElementById('modalTemp').textContent = brew.temp;
+  document.getElementById('modalCaffeine').textContent = brew.caffeine;
+
+  renderModalSizes(p);
+
+  document.getElementById('productOverlay').classList.add('open');
+  document.getElementById('productModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function renderModalSizes(p) {
+  const container = document.getElementById('sizeOptions');
+  container.innerHTML = '';
+  sizes.forEach((s, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'size-btn' + (i === selectedSize ? ' selected' : '');
+    btn.innerHTML = `<span class="size-name">${s.label}</span><span class="size-price">${formatPrice(p.price * s.multiplier)}</span>`;
+    btn.addEventListener('click', () => {
+      selectedSize = i;
+      renderModalSizes(p);
+    });
+    container.appendChild(btn);
+  });
+  document.getElementById('modalPrice').textContent = formatPrice(p.price * sizes[selectedSize].multiplier);
+}
+
+function closeProductModal() {
+  document.getElementById('productOverlay').classList.remove('open');
+  document.getElementById('productModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ─── Checkout ─────────────────────────────────────────────────
+function openCheckout() {
+  closeCart();
+  showCheckoutStep('stepDelivery');
+  document.getElementById('checkoutOverlay').classList.add('open');
+  document.getElementById('checkoutModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeCheckout() {
+  document.getElementById('checkoutOverlay').classList.remove('open');
+  document.getElementById('checkoutModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function showCheckoutStep(id) {
+  ['stepDelivery','stepPayment','stepConfirmation'].forEach(s => {
+    document.getElementById(s).classList.toggle('hidden', s !== id);
+  });
+}
+
+function validateField(input, message) {
+  const err = input.parentElement.querySelector('.field-error');
+  if (!input.value.trim()) {
+    input.classList.add('invalid');
+    err.textContent = message;
+    return false;
+  }
+  input.classList.remove('invalid');
+  err.textContent = '';
+  return true;
+}
+
+function validateEmail(input) {
+  const err = input.parentElement.querySelector('.field-error');
+  const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value.trim());
+  if (!ok) {
+    input.classList.add('invalid');
+    err.textContent = 'Enter a valid email address';
+    return false;
+  }
+  input.classList.remove('invalid');
+  err.textContent = '';
+  return true;
+}
+
+function renderCheckoutSummary() {
+  const container = document.getElementById('checkoutSummary');
+  const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const shipping = subtotal >= 40 ? 0 : 4.99;
+  const total = subtotal + shipping;
+
+  container.innerHTML = cart.map(i =>
+    `<div class="summary-row"><span>${i.name} × ${i.qty}</span><span>${formatPrice(i.price * i.qty)}</span></div>`
+  ).join('') +
+  `<div class="summary-row"><span>Shipping</span><span>${shipping === 0 ? 'Free' : formatPrice(shipping)}</span></div>
+   <div class="summary-row total"><span>Total</span><span>${formatPrice(total)}</span></div>`;
+
+  return total;
+}
+
+function generateOrderNumber() {
+  return 'FLG-' + Math.random().toString(36).slice(2,7).toUpperCase();
+}
+
 function initCheckout() {
-  document.getElementById('checkoutBtn').addEventListener('click', () => {
-    showToast('Checkout coming soon — thanks for shopping Foliage!');
-    closeCart();
+  // Open checkout from cart
+  document.getElementById('checkoutBtn').addEventListener('click', openCheckout);
+
+  // Close checkout
+  document.getElementById('closeCheckout').addEventListener('click', closeCheckout);
+  document.getElementById('checkoutOverlay').addEventListener('click', closeCheckout);
+
+  // Delivery form
+  document.getElementById('deliveryForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const ok = [
+      validateField(document.getElementById('fname'), 'First name is required'),
+      validateField(document.getElementById('lname'), 'Last name is required'),
+      validateEmail(document.getElementById('email')),
+      validateField(document.getElementById('address'), 'Address is required'),
+      validateField(document.getElementById('city'), 'City is required'),
+      validateField(document.getElementById('postcode'), 'Postcode is required'),
+    ].every(Boolean);
+    if (!ok) return;
+    renderCheckoutSummary();
+    showCheckoutStep('stepPayment');
+  });
+
+  // Back button
+  document.getElementById('backToDelivery').addEventListener('click', () => showCheckoutStep('stepDelivery'));
+
+  // Format card number with spaces
+  document.getElementById('cardnum').addEventListener('input', e => {
+    e.target.value = e.target.value.replace(/\D/g,'').replace(/(.{4})/g,'$1 ').trim();
+  });
+
+  // Format expiry MM/YY
+  document.getElementById('expiry').addEventListener('input', e => {
+    const v = e.target.value.replace(/\D/g,'');
+    e.target.value = v.length >= 3 ? v.slice(0,2) + '/' + v.slice(2) : v;
+  });
+
+  // Payment form
+  document.getElementById('paymentForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const cardnum = document.getElementById('cardnum');
+    const expiry  = document.getElementById('expiry');
+    const cvv     = document.getElementById('cvv');
+    const ok = [
+      validateField(document.getElementById('cardname'), 'Name is required'),
+      (() => {
+        const digits = cardnum.value.replace(/\s/g,'');
+        const err = cardnum.parentElement.querySelector('.field-error');
+        if (digits.length < 16) { cardnum.classList.add('invalid'); err.textContent = 'Enter a valid 16-digit card number'; return false; }
+        cardnum.classList.remove('invalid'); err.textContent = ''; return true;
+      })(),
+      (() => {
+        const err = expiry.parentElement.querySelector('.field-error');
+        if (!/^\d{2}\/\d{2}$/.test(expiry.value)) { expiry.classList.add('invalid'); err.textContent = 'Use MM/YY format'; return false; }
+        expiry.classList.remove('invalid'); err.textContent = ''; return true;
+      })(),
+      (() => {
+        const err = cvv.parentElement.querySelector('.field-error');
+        if (!/^\d{3,4}$/.test(cvv.value)) { cvv.classList.add('invalid'); err.textContent = '3 or 4 digits'; return false; }
+        cvv.classList.remove('invalid'); err.textContent = ''; return true;
+      })(),
+    ].every(Boolean);
+    if (!ok) return;
+
+    // Show confirmation
+    const email = document.getElementById('email').value.trim();
+    const fname = document.getElementById('fname').value.trim();
+    const orderNum = generateOrderNumber();
+    const total = renderCheckoutSummary();
+
+    document.getElementById('confirmEmail').textContent = email;
+    document.getElementById('confirmDetails').innerHTML = `
+      <div class="summary-row"><span>Order number</span><span>${orderNum}</span></div>
+      <div class="summary-row"><span>Name</span><span>${fname} ${document.getElementById('lname').value.trim()}</span></div>
+      <div class="summary-row total"><span>Total charged</span><span>${formatPrice(total)}</span></div>
+    `;
+
+    cart = [];
+    saveCart();
+    updateCartCount();
+    renderCartItems();
+    showCheckoutStep('stepConfirmation');
+  });
+
+  // Done button
+  document.getElementById('doneBtn').addEventListener('click', () => {
+    closeCheckout();
+    document.getElementById('deliveryForm').reset();
+    document.getElementById('paymentForm').reset();
   });
 }
 
@@ -249,4 +466,31 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('cartBtn').addEventListener('click', openCart);
   document.getElementById('closeCart').addEventListener('click', closeCart);
   document.getElementById('cartOverlay').addEventListener('click', closeCart);
+
+  // Product modal
+  document.getElementById('closeProduct').addEventListener('click', closeProductModal);
+  document.getElementById('productOverlay').addEventListener('click', closeProductModal);
+  document.getElementById('modalAddBtn').addEventListener('click', () => {
+    if (activeProductId === null) return;
+    const p = products.find(x => x.id === activeProductId);
+    const s = sizes[selectedSize];
+    const price = parseFloat((p.price * s.multiplier).toFixed(2));
+    const cartId = `${p.id}-${s.label}`;
+    const existing = cart.find(i => i.id === cartId);
+    if (existing) { existing.qty++; }
+    else { cart.push({ id: cartId, name: `${p.name} (${s.label})`, emoji: p.emoji, price, qty: 1 }); }
+    saveCart();
+    updateCartCount();
+    renderCartItems();
+    closeProductModal();
+    showToast(`${p.name} (${s.label}) added to cart`);
+  });
+
+  // Close modals on Escape
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    closeProductModal();
+    closeCheckout();
+    closeCart();
+  });
 });

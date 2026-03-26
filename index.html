@@ -112,6 +112,126 @@
     </div>
   </aside>
 
+  <!-- PRODUCT DETAIL MODAL -->
+  <div class="modal-overlay" id="productOverlay"></div>
+  <div class="modal" id="productModal" role="dialog" aria-modal="true" aria-labelledby="modalName">
+    <button class="modal-close" id="closeProduct" aria-label="Close">&times;</button>
+    <div class="modal-thumb" id="modalThumb"></div>
+    <div class="modal-body">
+      <span class="card-category" id="modalCategory"></span>
+      <h2 class="modal-name" id="modalName"></h2>
+      <p class="modal-desc" id="modalDesc"></p>
+      <div class="modal-meta">
+        <div class="meta-item"><span class="meta-label">Steep</span><span id="modalSteep"></span></div>
+        <div class="meta-item"><span class="meta-label">Temp</span><span id="modalTemp"></span></div>
+        <div class="meta-item"><span class="meta-label">Caffeine</span><span id="modalCaffeine"></span></div>
+      </div>
+      <div class="modal-size-group">
+        <p class="modal-size-label">Size</p>
+        <div class="size-options" id="sizeOptions"></div>
+      </div>
+      <div class="modal-actions">
+        <span class="modal-price" id="modalPrice"></span>
+        <button class="btn-primary" id="modalAddBtn">Add to cart</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHECKOUT MODAL -->
+  <div class="modal-overlay" id="checkoutOverlay"></div>
+  <div class="modal checkout-modal" id="checkoutModal" role="dialog" aria-modal="true">
+    <button class="modal-close" id="closeCheckout" aria-label="Close">&times;</button>
+
+    <!-- Step 1: Delivery -->
+    <div class="checkout-step" id="stepDelivery">
+      <p class="checkout-eyebrow">Step 1 of 2</p>
+      <h2 class="modal-name">Delivery details</h2>
+      <form id="deliveryForm" novalidate>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fname">First name</label>
+            <input type="text" id="fname" name="fname" autocomplete="given-name" required />
+            <span class="field-error"></span>
+          </div>
+          <div class="form-group">
+            <label for="lname">Last name</label>
+            <input type="text" id="lname" name="lname" autocomplete="family-name" required />
+            <span class="field-error"></span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" autocomplete="email" required />
+          <span class="field-error"></span>
+        </div>
+        <div class="form-group">
+          <label for="address">Address</label>
+          <input type="text" id="address" name="address" autocomplete="street-address" required />
+          <span class="field-error"></span>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="city">City</label>
+            <input type="text" id="city" name="city" autocomplete="address-level2" required />
+            <span class="field-error"></span>
+          </div>
+          <div class="form-group">
+            <label for="postcode">Postcode</label>
+            <input type="text" id="postcode" name="postcode" autocomplete="postal-code" required />
+            <span class="field-error"></span>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary full-width">Continue to payment</button>
+      </form>
+    </div>
+
+    <!-- Step 2: Payment -->
+    <div class="checkout-step hidden" id="stepPayment">
+      <button class="back-btn" id="backToDelivery">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+      <p class="checkout-eyebrow">Step 2 of 2</p>
+      <h2 class="modal-name">Payment</h2>
+      <div class="order-summary" id="checkoutSummary"></div>
+      <form id="paymentForm" novalidate>
+        <div class="form-group">
+          <label for="cardname">Name on card</label>
+          <input type="text" id="cardname" name="cardname" autocomplete="cc-name" required />
+          <span class="field-error"></span>
+        </div>
+        <div class="form-group">
+          <label for="cardnum">Card number</label>
+          <input type="text" id="cardnum" name="cardnum" inputmode="numeric" maxlength="19" placeholder="0000 0000 0000 0000" autocomplete="cc-number" required />
+          <span class="field-error"></span>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="expiry">Expiry</label>
+            <input type="text" id="expiry" name="expiry" inputmode="numeric" maxlength="5" placeholder="MM/YY" autocomplete="cc-exp" required />
+            <span class="field-error"></span>
+          </div>
+          <div class="form-group">
+            <label for="cvv">CVV</label>
+            <input type="text" id="cvv" name="cvv" inputmode="numeric" maxlength="4" placeholder="•••" autocomplete="cc-csc" required />
+            <span class="field-error"></span>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary full-width" id="placeOrderBtn">Place order</button>
+      </form>
+    </div>
+
+    <!-- Step 3: Confirmation -->
+    <div class="checkout-step hidden" id="stepConfirmation">
+      <div class="confirmation-icon">✓</div>
+      <h2 class="modal-name">Order confirmed!</h2>
+      <p class="confirmation-sub">Thank you for your order. We'll send a confirmation to <strong id="confirmEmail"></strong> shortly.</p>
+      <div class="confirmation-details" id="confirmDetails"></div>
+      <p class="confirmation-note">Your teas will be dispatched within 1–2 business days in compostable packaging.</p>
+      <button class="btn-primary full-width" id="doneBtn">Continue shopping</button>
+    </div>
+  </div>
+
   <!-- TOAST -->
   <div class="toast" id="toast"></div>
 

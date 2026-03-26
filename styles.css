@@ -594,7 +594,297 @@ img { display: block; max-width: 100%; }
   transform: translateX(-50%) translateY(0);
 }
 
+/* ─── Product Modal ─────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 400;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -48%) scale(.97);
+  z-index: 401;
+  background: var(--bg);
+  border-radius: 16px;
+  width: min(860px, 94vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s, transform .3s cubic-bezier(.4,0,.2,1);
+  box-shadow: var(--shadow-lg);
+}
+.modal.open {
+  opacity: 1;
+  pointer-events: all;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1.25rem;
+  background: none;
+  border: none;
+  font-size: 1.6rem;
+  color: var(--ink-2);
+  z-index: 1;
+  line-height: 1;
+  transition: color .2s;
+}
+.modal-close:hover { color: var(--ink); }
+
+.modal-thumb {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 5rem;
+  border-radius: 16px 0 0 16px;
+}
+
+.modal-body {
+  padding: 2.5rem 2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+}
+
+.modal-name {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.modal-desc {
+  font-size: .88rem;
+  color: var(--ink-2);
+  line-height: 1.7;
+}
+
+.modal-meta {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin: .25rem 0;
+}
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: .2rem;
+  flex: 1;
+}
+.meta-label {
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--ink-3);
+  font-weight: 500;
+}
+.meta-item span:last-child {
+  font-size: .88rem;
+  font-weight: 500;
+}
+
+.modal-size-label {
+  font-size: .75rem;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--ink-3);
+  font-weight: 500;
+  margin-bottom: .5rem;
+}
+.size-options {
+  display: flex;
+  gap: .5rem;
+}
+.size-btn {
+  flex: 1;
+  padding: .55rem .5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: none;
+  font-size: .82rem;
+  text-align: center;
+  transition: all .2s;
+  color: var(--ink-2);
+}
+.size-btn:hover { border-color: var(--accent); color: var(--accent); }
+.size-btn.selected {
+  border-color: var(--accent);
+  background: var(--accent-l);
+  color: var(--accent);
+  font-weight: 500;
+}
+.size-btn .size-name { font-weight: 500; display: block; }
+.size-btn .size-price { font-size: .75rem; opacity: .8; }
+
+.modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: .5rem;
+}
+.modal-price {
+  font-size: 1.3rem;
+  font-weight: 500;
+  font-family: var(--font-serif);
+}
+
+/* ─── Checkout Modal ────────────────────────────────────────── */
+.checkout-modal {
+  display: block;
+  width: min(520px, 94vw);
+  padding: 2.5rem;
+}
+
+.checkout-step { display: flex; flex-direction: column; gap: 1.25rem; }
+.checkout-step.hidden { display: none; }
+
+.checkout-eyebrow {
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  background: none;
+  border: none;
+  font-size: .82rem;
+  color: var(--ink-2);
+  padding: 0;
+  transition: color .2s;
+  margin-bottom: -.25rem;
+}
+.back-btn:hover { color: var(--accent); }
+
+/* Forms */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+}
+.form-group label {
+  font-size: .78rem;
+  font-weight: 500;
+  letter-spacing: .04em;
+  color: var(--ink-2);
+  text-transform: uppercase;
+}
+.form-group input {
+  padding: .7rem .9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: .92rem;
+  background: #fff;
+  color: var(--ink);
+  transition: border-color .2s, box-shadow .2s;
+  outline: none;
+}
+.form-group input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(74,124,89,.12);
+}
+.form-group input.invalid { border-color: var(--warn); }
+.field-error {
+  font-size: .75rem;
+  color: var(--warn);
+  min-height: 1em;
+}
+
+/* Order summary in payment step */
+.order-summary {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: .85rem;
+  color: var(--ink-2);
+}
+.summary-row.total {
+  font-weight: 600;
+  color: var(--ink);
+  border-top: 1px solid var(--border);
+  padding-top: .5rem;
+  margin-top: .25rem;
+  font-size: .92rem;
+}
+
+/* Confirmation */
+.confirmation-icon {
+  width: 56px;
+  height: 56px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin: 0 auto .5rem;
+}
+.confirmation-sub {
+  font-size: .92rem;
+  color: var(--ink-2);
+  line-height: 1.6;
+  text-align: center;
+}
+.confirmation-details {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+}
+.confirmation-note {
+  font-size: .8rem;
+  color: var(--ink-3);
+  text-align: center;
+  line-height: 1.6;
+}
+
 /* ─── Responsive ────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .modal {
+    grid-template-columns: 1fr;
+    width: 94vw;
+  }
+  .modal-thumb { border-radius: 16px 16px 0 0; aspect-ratio: 2/1; font-size: 3.5rem; }
+  .checkout-modal { padding: 2rem 1.25rem; }
+  .form-row { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 768px) {
   .hero {
     grid-template-columns: 1fr;
